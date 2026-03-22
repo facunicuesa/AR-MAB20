@@ -47,4 +47,6 @@ Thumbs.db
 *.xlsx
 *.xls
 proctor_data/proctor_dashboard.html
-proctor_db.csv
+
+# Allow proctor database to be version controlled
+!proctor_data/proctor_db.csv
