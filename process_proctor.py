@@ -935,20 +935,34 @@ def main():
     p.add_argument('--html', default=DEFAULT_HTML, help='HTML output path')
     args = p.parse_args()
 
-    print("Loading Excel...")
-    new_df = load_xlsx(args.xlsx)
-    print(f"  Found {len(new_df)} valid test(s) in spreadsheet.")
+    # Try to load from Excel; if not available, load from existing DB
+    if os.path.exists(args.xlsx):
+        print("Loading Excel...")
+        new_df = load_xlsx(args.xlsx)
+        print(f"  Found {len(new_df)} valid test(s) in spreadsheet.")
 
-    if new_df.empty:
-        print("No valid tests found. Exiting.")
-        return
-
-    print("Updating database...")
-    db_df = update_db(new_df, args.db)
+        if new_df.empty:
+            print("No valid tests found. Using existing database.")
+            if os.path.exists(args.db):
+                db_df = pd.read_csv(args.db)
+            else:
+                print("No database found either. Exiting.")
+                return
+        else:
+            print("Updating database...")
+            db_df = update_db(new_df, args.db)
+    else:
+        # Excel file not found (e.g., on PythonAnywhere) - load from CSV
+        print(f"Excel file not found: {args.xlsx}")
+        if os.path.exists(args.db):
+            print(f"Loading from database: {args.db}")
+            db_df = pd.read_csv(args.db)
+        else:
+            print("No database found either. Exiting.")
+            return
 
     print("Generating dashboard...")
     generate_html(db_df, args.html)
-
     print("Done.")
 
 
