@@ -105,6 +105,6 @@ def api_reset():
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
-    print(f"\n  Proctor Dashboard  →  http://localhost:{port}")
+    print(f"\n  Proctor Dashboard -> http://localhost:{port}")
     print("  Press Ctrl+C to stop.\n")
     app.run(debug=False, host='127.0.0.1', port=port)
