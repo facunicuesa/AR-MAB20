@@ -269,6 +269,15 @@ def generate_html(df: pd.DataFrame, html_path: str) -> None:
     pr_min   = int(min(pr_all)) if pr_all else 0
     pr_max   = int(max(pr_all)) if pr_all else 99999
 
+    # SRK logo (embedded base64)
+    import base64 as _b64
+    _logo_path = os.path.join(os.path.dirname(html_path), 'assets', 'srk_logo.png')
+    if os.path.exists(_logo_path):
+        with open(_logo_path, 'rb') as _f:
+            srk_logo_b64 = 'data:image/png;base64,' + _b64.b64encode(_f.read()).decode()
+    else:
+        srk_logo_b64 = ''
+
     # ------------------------------------------------------------------
     html = f"""<!DOCTYPE html>
 <html lang="es">
@@ -278,74 +287,79 @@ def generate_html(df: pd.DataFrame, html_path: str) -> None:
 <title>Proctor Dashboard \u2014 AR-MAB20</title>
 <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
 <style>
+/* === SRK CONSULTING THEME === */
+/* Primary: #F37021 | Dark: #2c2c2c | Grey: #666 | Cream: #F3F2E5 */
 *{{box-sizing:border-box;margin:0;padding:0}}
-body{{font-family:Arial,sans-serif;background:#f0f2f5;color:#2c3e50}}
+body{{font-family:Arial,sans-serif;background:#F3F2E5;color:#2c2c2c}}
 /* HEADER */
-.hdr{{background:linear-gradient(135deg,#1a2f4a 0%,#2471a3 100%);color:#fff;
-  padding:14px 24px;display:flex;justify-content:space-between;align-items:center;
-  box-shadow:0 2px 8px rgba(0,0,0,.28);gap:16px;flex-wrap:wrap}}
-.hdr h1{{font-size:1.2rem;font-weight:700;letter-spacing:.02em}}
-.hdr .sub{{font-size:.73rem;opacity:.72;margin-top:3px}}
-.hdr-right{{display:flex;align-items:center;gap:12px;flex-shrink:0}}
-.upd{{font-size:.7rem;opacity:.6;text-align:right;white-space:nowrap}}
+.hdr{{background:#2c2c2c;color:#fff;
+  padding:0 24px;display:flex;justify-content:space-between;align-items:stretch;
+  box-shadow:0 2px 8px rgba(0,0,0,.32);gap:16px;flex-wrap:wrap;min-height:64px}}
+.hdr-left{{display:flex;align-items:center;gap:20px;padding:10px 0;
+  border-right:3px solid #F37021;padding-right:20px}}
+.hdr-logo{{height:36px;width:auto;filter:brightness(0) invert(1)}}
+.hdr-title h1{{font-size:1.05rem;font-weight:700;letter-spacing:.02em;line-height:1.3}}
+.hdr-title .sub{{font-size:.68rem;color:rgba(255,255,255,.6);margin-top:2px}}
+.hdr-right{{display:flex;align-items:center;gap:12px;flex-shrink:0;padding:10px 0}}
+.upd{{font-size:.7rem;opacity:.5;text-align:right;white-space:nowrap}}
 #upd-status{{font-size:.7rem;color:rgba(255,255,255,.9);white-space:nowrap;max-width:260px;text-align:right}}
 /* CONTROLS */
 .ctrl{{background:#fff;padding:10px 24px;display:flex;flex-wrap:wrap;gap:18px;
-  align-items:flex-end;border-bottom:1px solid #e8edf2;
+  align-items:flex-end;border-bottom:1px solid #ddd;
   box-shadow:0 1px 4px rgba(0,0,0,.06)}}
-.ctrl-sub{{background:#f8f9fb;padding:8px 24px;display:flex;flex-wrap:wrap;gap:18px;
-  align-items:flex-end;border-bottom:2px solid #e0e6ed;font-size:.78rem}}
+.ctrl-sub{{background:#faf9f5;padding:8px 24px;display:flex;flex-wrap:wrap;gap:18px;
+  align-items:flex-end;border-bottom:2px solid #e8e5dc;font-size:.78rem}}
 .cg{{display:flex;flex-direction:column;gap:4px}}
-.cg>label{{font-size:.67rem;font-weight:700;color:#7f8c8d;text-transform:uppercase;letter-spacing:.06em}}
+.cg>label{{font-size:.67rem;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.06em}}
 .cr{{display:flex;gap:6px;align-items:center}}
-input[type=date],input[type=number]{{border:1px solid #c8d6df;border-radius:4px;
-  padding:5px 8px;font-size:.82rem;color:#2c3e50;background:#fff;outline:none;
+input[type=date],input[type=number]{{border:1px solid #ccc;border-radius:3px;
+  padding:5px 8px;font-size:.82rem;color:#2c2c2c;background:#fff;outline:none;
   transition:border-color .15s}}
-input[type=date]:focus,input[type=number]:focus{{border-color:#2471a3}}
-input[type=date]:disabled,input[type=number]:disabled{{background:#f4f6f7;color:#aaa;cursor:not-allowed}}
+input[type=date]:focus,input[type=number]:focus{{border-color:#F37021}}
+input[type=date]:disabled,input[type=number]:disabled{{background:#f4f4f4;color:#aaa;cursor:not-allowed}}
 input[type=number]{{width:90px}}
 input[type=date]{{width:130px}}
-select.ctrl-sel{{border:1px solid #c8d6df;border-radius:4px;padding:5px 8px;
-  font-size:.82rem;color:#2c3e50;background:#fff;outline:none;cursor:pointer;
+select.ctrl-sel{{border:1px solid #ccc;border-radius:3px;padding:5px 8px;
+  font-size:.82rem;color:#2c2c2c;background:#fff;outline:none;cursor:pointer;
   transition:border-color .15s}}
-select.ctrl-sel:focus{{border-color:#2471a3}}
-.fname{{font-size:.75rem;color:#7f8c8d;max-width:260px;
+select.ctrl-sel:focus{{border-color:#F37021}}
+.fname{{font-size:.75rem;color:#888;max-width:260px;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap}}
 .chk{{display:flex;gap:12px;align-items:center}}
 .cl{{display:flex;align-items:center;gap:4px;cursor:pointer;font-size:.82rem;user-select:none}}
-.cl input{{cursor:pointer;width:14px;height:14px}}
-.sep{{color:#bdc3c7;font-size:.85rem}}
+.cl input{{cursor:pointer;width:14px;height:14px;accent-color:#F37021}}
+.sep{{color:#ccc;font-size:.85rem}}
 /* BUTTONS */
-.btn{{padding:5px 13px;border:1.5px solid #2471a3;border-radius:4px;background:#fff;
-  color:#2471a3;cursor:pointer;font-size:.78rem;font-weight:700;transition:all .18s;white-space:nowrap}}
-.btn:hover,.btn.on{{background:#2471a3;color:#fff}}
-.btn.rst{{border-color:#aaa;color:#95a5a6}}
-.btn.rst:hover{{background:#95a5a6;color:#fff;border-color:#95a5a6}}
-.btn.upd{{background:#27ae60;border-color:#27ae60;color:#fff}}
-.btn.upd:hover{{background:#1e8449;border-color:#1e8449}}
-.btn.upd:disabled{{opacity:.55;cursor:not-allowed;background:#27ae60}}
-.btn.exp{{border-color:#e67e22;color:#e67e22;font-size:.72rem;padding:3px 10px}}
-.btn.exp:hover{{background:#e67e22;color:#fff}}
+.btn{{padding:5px 13px;border:1.5px solid #F37021;border-radius:3px;background:#fff;
+  color:#F37021;cursor:pointer;font-size:.78rem;font-weight:700;transition:all .18s;white-space:nowrap}}
+.btn:hover,.btn.on{{background:#F37021;color:#fff}}
+.btn.rst{{border-color:#aaa;color:#888}}
+.btn.rst:hover{{background:#888;color:#fff;border-color:#888}}
+.btn.upd{{background:#F37021;border-color:#F37021;color:#fff}}
+.btn.upd:hover{{background:#d4601a;border-color:#d4601a}}
+.btn.upd:disabled{{opacity:.55;cursor:not-allowed;background:#F37021}}
+.btn.exp{{border-color:#666;color:#666;font-size:.72rem;padding:3px 10px}}
+.btn.exp:hover{{background:#666;color:#fff}}
 .btn.del{{border-color:#c0392b;color:#c0392b}}
 .btn.del:hover{{background:#c0392b;color:#fff}}
 .btn.del:disabled{{opacity:.4;cursor:not-allowed;background:#fff}}
 /* STATS BAR */
-.sb{{background:#eaf2fb;padding:7px 24px;display:flex;gap:22px;flex-wrap:wrap;
-  border-bottom:1px solid #c8dff0;font-size:.77rem;color:#1a2f4a}}
-.sb span{{font-weight:700}}
+.sb{{background:#fff;padding:7px 24px;display:flex;gap:22px;flex-wrap:wrap;
+  border-bottom:3px solid #F37021;font-size:.77rem;color:#2c2c2c}}
+.sb span{{font-weight:700;color:#F37021}}
 /* CONTENT */
 .content{{padding:14px 20px}}
-.card{{background:#fff;border-radius:8px;box-shadow:0 1px 5px rgba(0,0,0,.09);
-  margin-bottom:14px;overflow:hidden}}
+.card{{background:#fff;border-radius:4px;box-shadow:0 1px 5px rgba(0,0,0,.09);
+  margin-bottom:14px;overflow:hidden;border-top:3px solid #F37021}}
 .card-hdr{{display:flex;justify-content:space-between;align-items:center;
   padding:10px 16px;border-bottom:1px solid #f0f0f0;gap:10px}}
-.ctitle{{font-size:.84rem;font-weight:700;color:#1a2f4a}}
+.ctitle{{font-size:.84rem;font-weight:700;color:#2c2c2c}}
 .card-tools{{display:flex;gap:8px;align-items:center;flex-shrink:0}}
-.bin-ctrl{{display:flex;gap:5px;align-items:center;font-size:.73rem;color:#7f8c8d}}
-.bin-ctrl select{{font-size:.73rem;padding:2px 5px;border:1px solid #c8d6df;
-  border-radius:4px;color:#2c3e50;background:#fff;cursor:pointer;outline:none}}
-.bin-ctrl input{{width:56px;font-size:.73rem;padding:2px 5px;border:1px solid #c8d6df;
-  border-radius:4px;color:#2c3e50;background:#fff;outline:none}}
+.bin-ctrl{{display:flex;gap:5px;align-items:center;font-size:.73rem;color:#888}}
+.bin-ctrl select{{font-size:.73rem;padding:2px 5px;border:1px solid #ccc;
+  border-radius:3px;color:#2c2c2c;background:#fff;cursor:pointer;outline:none}}
+.bin-ctrl input{{width:56px;font-size:.73rem;padding:2px 5px;border:1px solid #ccc;
+  border-radius:3px;color:#2c2c2c;background:#fff;outline:none}}
 .hrow{{display:grid;grid-template-columns:1fr 1fr;gap:14px}}
 @media(max-width:700px){{.hrow{{grid-template-columns:1fr}}}}
 #proctor-plot,#hist-dmax,#hist-wopt{{width:100%}}
@@ -354,9 +368,12 @@ select.ctrl-sel:focus{{border-color:#2471a3}}
 <body>
 
 <div class="hdr">
-  <div>
-    <h1>Ensayos Proctor Modificado \u2014 AR-MAB20</h1>
-    <div class="sub">RFP SBDF Cell A &middot; Muro &middot; Control de Calidad</div>
+  <div class="hdr-left">
+    <img class="hdr-logo" src="{srk_logo_b64}" alt="SRK Consulting">
+    <div class="hdr-title">
+      <h1>Ensayos Proctor Modificado &mdash; AR-MAB20</h1>
+      <div class="sub">RFP SBDF Cell A &middot; Muro &middot; Control de Calidad</div>
+    </div>
   </div>
   <div class="hdr-right">
     <div id="upd-status"></div>
@@ -657,8 +674,8 @@ function renderProctor(tests) {{
   }});
 
   const layout = {{
-    xaxis: {{ title: 'Humedad (%)',                gridcolor: '#ecf0f1', zeroline: false }},
-    yaxis: {{ title: 'Densidad seca (g/cm\u00b3)', gridcolor: '#ecf0f1', zeroline: false }},
+    xaxis: {{ title: 'Humedad (%)',                gridcolor: '#e8e5dc', zeroline: false }},
+    yaxis: {{ title: 'Densidad seca (g/cm\u00b3)', gridcolor: '#e8e5dc', zeroline: false }},
     showlegend: legVis,
     legend: {{
       x: 1.01, y: 1, xanchor: 'left', yanchor: 'top',
@@ -667,7 +684,7 @@ function renderProctor(tests) {{
     }},
     margin: {{ t: 20, r: 200, b: 55, l: 70 }},
     height: 500,
-    plot_bgcolor: '#fafbfc',
+    plot_bgcolor: '#fdfcfa',
     paper_bgcolor: '#fff',
     hovermode: 'closest',
   }};
@@ -716,7 +733,7 @@ function renderHist(divId, vals, color, xtitle, modeId, valId) {{
       yaxis:        {{ title: 'Frecuencia', gridcolor: '#ecf0f1' }},
       margin:       {{ t: 30, r: 20, b: 55, l: 55 }},
       height:       300,
-      plot_bgcolor: '#fafbfc',
+      plot_bgcolor: '#fdfcfa',
       paper_bgcolor:'#fff',
       bargap:       .05,
       showlegend:   false,
